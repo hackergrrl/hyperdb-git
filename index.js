@@ -36,11 +36,20 @@ module.exports = function (db) {
         return
       }
       pending++
-      console.error('writing /objects/'+ref, refs[ref].length)
-      db.put('/objects/' + ref, refs[ref], function (err) {
+      var key = '/objects/' + ref
+      console.error('writing '+key, refs[ref].length)
+      db.get(key, function (err, values) {
         if (err) return cb(err)
-        console.error('wrote', ref)
-        if (!--pending) cb(null)
+        if (values && values.length > 0) {
+          console.error('skipped', key, '(already present)')
+          if (!--pending) cb(null)
+          return
+        }
+        db.put('/objects/' + ref, refs[ref], function (err) {
+          if (err) return cb(err)
+          console.error('wrote', ref)
+          if (!--pending) cb(null)
+        })
       })
     })
   }
