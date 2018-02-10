@@ -7,7 +7,7 @@ module.exports = function () {
   var dbName = process.argv[3].substring('hyper://'.length)
   console.error('dbhash', dbName)
 
-  var db = hyperdb(dbName)
+  var db = hyperdb('hyper/' + dbName)
   var git = hgit(db)
 
   db.ready(function () {
@@ -39,11 +39,22 @@ module.exports = function () {
             })
             console.log()
           })
-          console.log('a72a075cec49749270b57f6dd2392e8a0bcf749f master')
-          console.log('@master HEAD')
           break
         case 'fetch':
-          console.error('fetch hash', args[0])
+          var hash = args[0]
+          // git.walkHash(hash, function (err, res) {
+          //   console.log('walk-res', res)
+          // })
+          // return
+          // console.error('db.get', '/objects/'+hash)
+          db.get('/objects/'+hash, function (err, values) {
+            var content = values[0].value.toString()
+            var type = determineTypeFromContent(content, hash)
+            console.error('type', type)
+            var res = spawn('git', ['hash-object', '-w', '-t', type, '--stdin'], { input: content })
+            console.error('wrote', hash)
+            console.log()
+          })
           break
         case 'push':
           var force = args[0].startsWith('+')
@@ -52,10 +63,10 @@ module.exports = function () {
           var dst = args[0].split(':')[1]
           var res = {}
 
-          walkSync(src, res)
-
           var refCommit =
             spawn('git', ['rev-parse', src]).stdout.toString().trim()
+
+          walkSync(refCommit, res)
           res[src] = refCommit
 
           console.error('walk', Object.keys(res))
@@ -108,4 +119,12 @@ function hashType (hash) {
 
 function hashCat (hash) {
   return spawn('git', ['cat-file', '-p', hash]).stdout
+}
+
+function determineTypeFromContent (raw, hash) {
+  var sha = require('sha1')
+  var len = raw.length + '\0'
+  if (sha('tree ' + len + raw).toString('hex') === hash) return 'tree'
+  if (sha('commit ' + len + raw).toString('hex') === hash) return 'commit'
+  else return 'blob'
 }

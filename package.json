@@ -12,9 +12,10 @@
   "scripts": {
     "lint": "standard"
   },
-  "keywords": [
-  ],
-  "dependencies": {},
+  "keywords": [],
+  "dependencies": {
+    "sha1": "^1.1.1"
+  },
   "devDependencies": {
     "standard": "~10.0.0"
   },
