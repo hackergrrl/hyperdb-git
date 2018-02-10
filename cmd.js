@@ -46,7 +46,6 @@ module.exports = function () {
           console.error('fetch hash', args[0])
           break
         case 'push':
-          process.exit(1)
           var force = args[0].startsWith('+')
           var src = args[0].split(':')[0]
           if (force) src = src.substring(1)
